@@ -93,6 +93,20 @@ export const Header = () => {
             </Link>
             
             <Link
+              href="/clusters"
+              className="text-sm font-medium text-gray-700 hover:text-gray-900"
+            >
+              Clusters
+            </Link>
+            
+            <Link
+              href="/workflows"
+              className="text-sm font-medium text-gray-700 hover:text-gray-900"
+            >
+              Workflows
+            </Link>
+            
+            <Link
               href="/surprise"
               className="text-sm font-medium text-purple-600 hover:text-purple-700 bg-purple-50 px-3 py-2 rounded-md"
             >

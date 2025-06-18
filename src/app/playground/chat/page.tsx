@@ -249,7 +249,7 @@ export default function ChatPlayground() {
       
       const assistantMessage: ChatMessage = {
         id: messages.length + 2,
-        role: "assistant",
+        role: "assistant", 
         content: data.response || "Sorry, I couldn't generate a response.",
         timestamp: new Date().toISOString()
       };
@@ -367,15 +367,15 @@ export default function ChatPlayground() {
                     <span className="text-sm text-yellow-700">No models available</span>
                   </div>
                 ) : (
-                  <Select value={selectedModel} onValueChange={setSelectedModel}>
-                    <SelectTrigger>
+                <Select value={selectedModel} onValueChange={setSelectedModel}>
+                  <SelectTrigger>
                       <SelectValue placeholder="Select a model" />
-                    </SelectTrigger>
-                    <SelectContent>
+                  </SelectTrigger>
+                  <SelectContent>
                       {availableModels.map((model) => (
                         <SelectItem key={model.name} value={model.name}>
-                          <div>
-                            <div className="font-medium">{model.name}</div>
+                        <div>
+                          <div className="font-medium">{model.name}</div>
                             <div className="text-xs text-gray-500">
                               {formatModelSize(model.size)} • Modified {new Date(model.modified_at).toLocaleDateString('en-US', {
                                 year: 'numeric',
@@ -383,11 +383,11 @@ export default function ChatPlayground() {
                                 day: 'numeric'
                               })}
                             </div>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 )}
               </div>
 
@@ -468,14 +468,14 @@ export default function ChatPlayground() {
                 <CardTitle>Chat</CardTitle>
                 <div className="flex items-center space-x-2">
                   {selectedModel && (
-                    <Badge variant="outline">
+                  <Badge variant="outline">
                       {selectedModel}
                     </Badge>
                   )}
                   {streamingEnabled && (
                     <Badge variant="secondary" className="bg-blue-100 text-blue-700">
                       Streaming
-                    </Badge>
+                  </Badge>
                   )}
                   <Badge 
                     variant="secondary" 

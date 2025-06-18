@@ -16,7 +16,10 @@ import {
   Clock,
   ChevronRight,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  Server,
+  Workflow,
+  Brain
 } from "lucide-react";
 import Link from "next/link";
 
@@ -206,7 +209,7 @@ export default function Dashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8">
         <Link href="/playground/chat">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer">
             <CardContent className="p-6">
@@ -252,22 +255,81 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </Link>
-        <Link href="/analytics">
+        <Link href="/clusters">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer">
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="p-3 bg-orange-100 rounded-lg">
-                  <Activity className="h-6 w-6 text-orange-600" />
+                  <Server className="h-6 w-6 text-orange-600" />
                 </div>
                 <div className="ml-4">
-                  <h3 className="font-semibold">View Analytics</h3>
-                  <p className="text-sm text-gray-600">Monitor usage and performance</p>
+                  <h3 className="font-semibold">Manage Clusters</h3>
+                  <p className="text-sm text-gray-600">Deploy and scale infrastructure</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/workflows">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-3 bg-indigo-100 rounded-lg">
+                  <Workflow className="h-6 w-6 text-indigo-600" />
+                </div>
+                <div className="ml-4">
+                  <h3 className="font-semibold">AI Workflows</h3>
+                  <p className="text-sm text-gray-600">Build intelligent automations</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </Link>
       </div>
+
+      {/* Workflow Status */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Brain className="h-5 w-5 mr-2 text-indigo-600" />
+            AI Workflow Status
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-indigo-600">3</div>
+              <p className="text-sm text-gray-600">Active Workflows</p>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">287</div>
+              <p className="text-sm text-gray-600">Total Executions</p>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-600">94.3%</div>
+              <p className="text-sm text-gray-600">Success Rate</p>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-purple-600">3.2s</div>
+              <p className="text-sm text-gray-600">Avg Execution Time</p>
+            </div>
+          </div>
+          <div className="flex justify-between items-center mt-6 pt-6 border-t">
+            <div>
+              <p className="text-sm text-gray-600">
+                Your AI workflows are running smoothly. 
+                <span className="text-green-600 font-medium"> All systems operational.</span>
+              </p>
+            </div>
+            <Button variant="outline" asChild>
+              <Link href="/workflows">
+                Manage Workflows
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Recent Activity & Popular Models */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
