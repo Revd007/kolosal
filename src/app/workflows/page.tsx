@@ -59,87 +59,12 @@ import {
   Eye,
   Activity
 } from "lucide-react";
-import { WorkflowCanvas } from "@/components/workflows/workflow-canvas";
-
-interface WorkflowNode {
-  id: string;
-  type: "trigger" | "ai" | "action" | "condition" | "transform";
-  category: "ai" | "core" | "integration" | "flow" | "human";
-  name: string;
-  description: string;
-  icon?: any;
-  config: Record<string, any>;
-  position: { x: number; y: number };
-  connections: {
-    input: string[];
-    output: string[];
-  };
-  status: "idle" | "running" | "success" | "error" | "waiting";
-  executionTime?: number;
-  lastRun?: string;
-}
-
-interface WorkflowConnection {
-  id: string;
-  from: string;
-  to: string;
-  fromPort: string;
-  toPort: string;
-}
-
-interface Workflow {
-  id: string;
-  name: string;
-  description: string;
-  status: "active" | "inactive" | "draft";
-  category: "ai-agent" | "automation" | "integration" | "custom";
-  nodes: WorkflowNode[];
-  connections: WorkflowConnection[];
-  triggers: {
-    type: "manual" | "webhook" | "schedule" | "event";
-    config: Record<string, any>;
-  }[];
-  variables: Record<string, any>;
-  created_at: string;
-  updated_at: string;
-  created_by: string;
-  executions: {
-    total: number;
-    successful: number;
-    failed: number;
-    last_run?: string;
-  };
-  performance: {
-    avg_execution_time: number;
-    success_rate: number;
-    total_runtime: number;
-  };
-}
-
-interface NodeTemplate {
-  id: string;
-  name: string;
-  category: "ai" | "core" | "integration" | "flow" | "human";
-  description: string;
-  icon: any;
-  color: string;
-  inputs: Array<{
-    name: string;
-    type: string;
-    required: boolean;
-    description: string;
-  }>;
-  outputs: Array<{
-    name: string;
-    type: string;
-    description: string;
-  }>;
-  config_schema: Record<string, any>;
-}
+import { WorkflowCanvas } from "@/components/workflows";
+import { WorkflowNode, WorkflowConnection, Workflow as WorkflowType, NodeTemplate } from "@/types/workflow";
 
 export default function WorkflowsPage() {
-  const [workflows, setWorkflows] = useState<Workflow[]>([]);
-  const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(null);
+  const [workflows, setWorkflows] = useState<WorkflowType[]>([]);
+  const [selectedWorkflow, setSelectedWorkflow] = useState<WorkflowType | null>(null);
   
   // Debug logging
   useEffect(() => {
@@ -266,7 +191,7 @@ export default function WorkflowsPage() {
   ];
 
   // Mock workflows data - sync with API data
-  const mockWorkflows: Workflow[] = [
+  const mockWorkflows: WorkflowType[] = [
     {
       id: "wf-ai-agent-1",
       name: "Customer Support AI Agent",
@@ -388,7 +313,7 @@ export default function WorkflowsPage() {
   });
 
   const handleCreateWorkflow = () => {
-    const newWorkflow: Workflow = {
+    const newWorkflow: WorkflowType = {
       id: `wf-${Date.now()}`,
       name: "New Workflow",
       description: "A new AI workflow",
@@ -623,7 +548,7 @@ export default function WorkflowsPage() {
           </div>
           <WorkflowCanvas 
             workflow={selectedWorkflow}
-            onWorkflowChange={(updatedWorkflow) => {
+            onWorkflowChange={(updatedWorkflow: WorkflowType) => {
               setWorkflows(prev => prev.map(wf => 
                 wf.id === updatedWorkflow.id ? updatedWorkflow : wf
               ));

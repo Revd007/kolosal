@@ -28,7 +28,23 @@ import {
   FileEdit,
   ToggleLeft,
   ToggleRight,
-  Brain
+  Brain,
+  BookOpen,
+  Type,
+  BarChart3,
+  Wand2,
+  Scissors,
+  AlignLeft,
+  FileText,
+  Clock,
+  Hash,
+  Target,
+  PenTool,
+  Sparkles,
+  Library,
+  History,
+  Share2,
+  Layers
 } from "lucide-react";
 
 interface OllamaModel {
@@ -72,7 +88,23 @@ interface MCPResult {
   };
 }
 
+interface PromptTemplate {
+  id: string;
+  name: string;
+  description: string;
+  prompt: string;
+  category: string;
+  task: string;
+}
 
+interface TextStats {
+  characters: number;
+  words: number;
+  sentences: number;
+  paragraphs: number;
+  readingTime: number;
+  readabilityScore: number;
+}
 
 export default function LanguagePlayground() {
   const [selectedModel, setSelectedModel] = useState<string>("");
@@ -92,6 +124,64 @@ export default function LanguagePlayground() {
   const [temperature, setTemperature] = useState(0.7);
   const [maxTokens, setMaxTokens] = useState(512);
   const [topP, setTopP] = useState(0.9);
+
+  // New useful features
+  const [showPromptLibrary, setShowPromptLibrary] = useState(false);
+  const [showTextStats, setShowTextStats] = useState(false);
+  const [savedPrompts, setSavedPrompts] = useState<string[]>([]);
+  const [compareMode, setCompareMode] = useState(false);
+  const [previousResults, setPreviousResults] = useState<GenerationResult[]>([]);
+
+  const promptTemplates: PromptTemplate[] = [
+    {
+      id: "story",
+      name: "📚 Creative Story",
+      description: "Generate creative fiction stories",
+      prompt: "Write an engaging short story about [TOPIC]. Include vivid descriptions, compelling characters, and an unexpected twist.",
+      category: "Creative",
+      task: "creative-writing"
+    },
+    {
+      id: "email",
+      name: "✉️ Professional Email",
+      description: "Draft professional emails",
+      prompt: "Write a professional email to [RECIPIENT] about [SUBJECT]. The tone should be [TONE] and include [SPECIFIC_DETAILS].",
+      category: "Business",
+      task: "completion"
+    },
+    {
+      id: "summary",
+      name: "📝 Text Summary",
+      description: "Summarize long texts",
+      prompt: "Please provide a concise summary of the following text, highlighting the key points and main conclusions:\n\n[TEXT_TO_SUMMARIZE]",
+      category: "Analysis",
+      task: "summarization"
+    },
+    {
+      id: "code-explain",
+      name: "💻 Code Explanation",
+      description: "Explain code functionality",
+      prompt: "Explain this code in simple terms, including what it does, how it works, and any important concepts:\n\n[CODE]",
+      category: "Technical",
+      task: "code-explanation"
+    },
+    {
+      id: "translate",
+      name: "🌐 Translation",
+      description: "Translate text between languages",
+      prompt: "Translate the following text from [SOURCE_LANGUAGE] to [TARGET_LANGUAGE], maintaining the original meaning and tone:\n\n[TEXT]",
+      category: "Language",
+      task: "translation"
+    },
+    {
+      id: "improve",
+      name: "✨ Text Improvement",
+      description: "Enhance writing quality",
+      prompt: "Improve the following text by enhancing clarity, flow, and engagement while maintaining the original meaning:\n\n[TEXT]",
+      category: "Writing",
+      task: "completion"
+    }
+  ];
 
   // Fetch available models from Ollama
   useEffect(() => {
@@ -117,8 +207,6 @@ export default function LanguagePlayground() {
 
     fetchOllamaModels();
   }, []);
-
-
 
   const handleGenerate = async () => {
     if (!prompt.trim() || !selectedModel) return;
@@ -152,6 +240,9 @@ export default function LanguagePlayground() {
 
       const data = await response.json();
       setResult(data);
+      
+      // Save to previous results for comparison
+      setPreviousResults(prev => [data, ...prev.slice(0, 4)]);
 
       // If MCP is enabled, run additional analysis
       if (mcpEnabled && data.response) {
@@ -309,19 +400,162 @@ Translation:
     }
   };
 
+  // New utility functions
+  const calculateTextStats = (text: string): TextStats => {
+    const characters = text.length;
+    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0).length;
+    const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim().length > 0).length;
+    const readingTime = Math.ceil(words / 200); // 200 words per minute average
+    
+    // Simple readability score (Flesch formula approximation)
+    const avgWordsPerSentence = sentences > 0 ? words / sentences : 0;
+    const avgSyllablesPerWord = words > 0 ? text.length / words / 2 : 0; // rough approximation
+    const readabilityScore = Math.max(0, Math.min(100, 
+      206.835 - (1.015 * avgWordsPerSentence) - (84.6 * avgSyllablesPerWord)
+    ));
 
+    return {
+      characters,
+      words,
+      sentences,
+      paragraphs,
+      readingTime,
+      readabilityScore
+    };
+  };
+
+  const handleTemplateSelect = (templateId: string) => {
+    const template = promptTemplates.find(t => t.id === templateId);
+    if (template) {
+      setPrompt(template.prompt);
+      setSelectedTask(template.task);
+      setShowPromptLibrary(false);
+    }
+  };
+
+  const savePrompt = () => {
+    const promptName = `Prompt ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
+    setSavedPrompts(prev => [...prev, promptName]);
+    // In a real app, you would save this to localStorage or a database
+  };
+
+  const formatText = (action: 'uppercase' | 'lowercase' | 'capitalize' | 'trim') => {
+    let newText = prompt;
+    switch (action) {
+      case 'uppercase':
+        newText = prompt.toUpperCase();
+        break;
+      case 'lowercase':
+        newText = prompt.toLowerCase();
+        break;
+      case 'capitalize':
+        newText = prompt.replace(/\b\w/g, l => l.toUpperCase());
+        break;
+      case 'trim':
+        newText = prompt.trim().replace(/\s+/g, ' ');
+        break;
+    }
+    setPrompt(newText);
+  };
+
+  const promptStats = calculateTextStats(prompt);
+  const resultStats = result ? calculateTextStats(result.response) : null;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="responsive-container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Language Playground</h1>
-        <p className="text-gray-600">Generate, analyze, and transform text with advanced AI models and MCP tools.</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Language Playground</h1>
+            <p className="text-gray-600 text-sm sm:text-base">Process and analyze text with advanced language models and NLP tools.</p>
+          </div>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowPromptLibrary(!showPromptLibrary)}
+              className="w-full sm:w-auto"
+            >
+              <BookOpen className="mr-2 h-4 w-4" />
+              Prompt Library
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowTextStats(!showTextStats)}
+              className="w-full sm:w-auto"
+            >
+              <BarChart3 className="mr-2 h-4 w-4" />
+              Stats
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCompareMode(!compareMode)}
+              className="w-full sm:w-auto"
+            >
+              <Target className="mr-2 h-4 w-4" />
+              Compare
+            </Button>
+          </div>
+        </div>
+
+        {/* Quick Stats */}
+        {showTextStats && (
+          <div className="flex flex-wrap items-center gap-4 sm:gap-6 mt-4 text-sm text-gray-600">
+            <div className="flex items-center space-x-1">
+              <FileText className="h-4 w-4" />
+              <span>{promptStats.characters} characters</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <Hash className="h-4 w-4" />
+              <span>{promptStats.words} words</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <Layers className="h-4 w-4" />
+              <span>{promptStats.sentences} sentences</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <Clock className="h-4 w-4" />
+              <span>~{promptStats.readingTime} min read</span>
+            </div>
+          </div>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      {/* Prompt Library */}
+      {showPromptLibrary && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <BookOpen className="mr-2 h-5 w-5" />
+              Prompt Library
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {promptTemplates.map((template) => (
+                <Button
+                  key={template.id}
+                  variant="outline"
+                  className="h-auto p-4 text-left flex flex-col items-start space-y-2 card-content-safe"
+                  onClick={() => handleTemplateSelect(template.id)}
+                >
+                  <div className="font-medium text-wrap-anywhere">{template.name}</div>
+                  <div className="text-xs text-gray-500 line-clamp-2 text-wrap-anywhere">{template.description}</div>
+                  <Badge variant="secondary" className="text-xs">{template.category}</Badge>
+                </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 lg:gap-8">
         {/* Settings Panel */}
-        <div className="lg:col-span-1">
+        <div className="xl:col-span-1">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -330,6 +564,49 @@ Translation:
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Text Formatting Tools */}
+              <div className="space-y-2">
+                <Label>Text Tools</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => formatText('uppercase')}
+                    className="text-xs"
+                  >
+                    <Type className="mr-1 h-3 w-3" />
+                    UPPER
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => formatText('lowercase')}
+                    className="text-xs"
+                  >
+                    <Type className="mr-1 h-3 w-3" />
+                    lower
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => formatText('capitalize')}
+                    className="text-xs"
+                  >
+                    <PenTool className="mr-1 h-3 w-3" />
+                    Title
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => formatText('trim')}
+                    className="text-xs"
+                  >
+                    <Scissors className="mr-1 h-3 w-3" />
+                    Trim
+                  </Button>
+                </div>
+              </div>
+
               {/* Ollama Status */}
               <div className="flex items-center justify-between">
                 <Label>Ollama Status</Label>
@@ -509,19 +786,27 @@ Translation:
                   />
                 </div>
               </div>
+
+              {/* Quick Actions */}
+              <div className="space-y-2">
+                <Button onClick={savePrompt} variant="outline" className="w-full">
+                  <BookOpen className="mr-2 h-4 w-4" />
+                  Save Prompt
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Main Interface */}
-        <div className="lg:col-span-3">
+        <div className="xl:col-span-3">
           <div className="space-y-6">
             {/* Input */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <Send className="mr-2 h-5 w-5" />
-                  Text Generation
+                  <FileText className="mr-2 h-5 w-5" />
+                  Text Input
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -532,42 +817,94 @@ Translation:
                     onChange={(e) => setPrompt(e.target.value)}
                     placeholder="Enter your prompt here..."
                     rows={6}
-                    className="resize-none"
+                    className="resize-none card-content-safe"
                   />
                 </div>
                 
-                <Button 
-                  onClick={handleGenerate}
-                  disabled={isLoading || !prompt.trim() || ollamaStatus !== "online" || !selectedModel}
-                  className="w-full"
-                >
-                  {isLoading ? (
-                    <>
-                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="mr-2 h-4 w-4" />
-                      Generate Text
-                    </>
-                  )}
-                </Button>
+                <div className="flex space-x-2">
+                  <Button 
+                    onClick={handleGenerate}
+                    disabled={isLoading || !prompt.trim() || ollamaStatus !== "online" || !selectedModel}
+                    className="flex-1"
+                  >
+                    {isLoading ? (
+                      <>
+                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="mr-2 h-4 w-4" />
+                        Generate Text
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setPrompt("")}
+                    disabled={!prompt.trim()}
+                  >
+                    <Scissors className="h-4 w-4" />
+                  </Button>
+                </div>
               </CardContent>
             </Card>
+
+            {/* Comparison Mode */}
+            {compareMode && previousResults.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Target className="mr-2 h-5 w-5" />
+                    Previous Results Comparison
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {previousResults.slice(0, 3).map((prevResult, index) => (
+                      <div key={index} className="p-3 bg-gray-50 rounded-lg border">
+                        <div className="flex items-center justify-between mb-2">
+                          <Badge variant="outline" className="text-xs">
+                            {prevResult.model} • {prevResult.task}
+                          </Badge>
+                          <span className="text-xs text-gray-500">
+                            {new Date(prevResult.created_at).toLocaleTimeString()}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-700 line-clamp-3">
+                          {prevResult.response.substring(0, 150)}...
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Results */}
             {result && (
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <CardTitle className="flex items-center">
                       <CheckCircle className="mr-2 h-5 w-5 text-green-500" />
                       Generated Text
                     </CardTitle>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <Badge variant="outline">{result.model}</Badge>
                       <Badge variant="secondary">{result.task}</Badge>
+                      {resultStats && (
+                        <>
+                          <Badge variant="outline" className="text-xs">
+                            <Hash className="mr-1 h-3 w-3" />
+                            {resultStats.words} words
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            <Clock className="mr-1 h-3 w-3" />
+                            {resultStats.readingTime} min
+                          </Badge>
+                        </>
+                      )}
                       {mcpEnabled && (
                         <Badge variant="secondary" className="bg-blue-100 text-blue-700">
                           <Brain className="mr-1 h-3 w-3" />
@@ -578,9 +915,37 @@ Translation:
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Generated Text */}
+                  {/* Diff-style Comparison */}
                   <div className="space-y-2">
-                    <Label>Result</Label>
+                    <Label>Comparison View</Label>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {/* Original Prompt */}
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                          <Label className="text-sm font-medium text-red-700">Original Prompt</Label>
+                        </div>
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                          <p className="text-red-900 text-sm whitespace-pre-wrap leading-relaxed">{prompt}</p>
+                        </div>
+                      </div>
+
+                      {/* Generated Result */}
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                          <Label className="text-sm font-medium text-green-700">Generated Result</Label>
+                        </div>
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                          <p className="text-green-900 text-sm whitespace-pre-wrap leading-relaxed">{result.response}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Traditional View */}
+                  <div className="space-y-2">
+                    <Label>Traditional View</Label>
                     <div className="bg-gray-50 rounded-lg p-4 border">
                       <p className="text-gray-900 whitespace-pre-wrap">{result.response}</p>
                     </div>
@@ -697,6 +1062,13 @@ Translation:
                       <Download className="mr-2 h-4 w-4" />
                       Download
                     </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setPrompt(result.response)}
+                    >
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Use as Input
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -705,32 +1077,32 @@ Translation:
             {/* Help Section */}
             <Card>
               <CardContent className="p-6">
-                <div className="flex items-start space-x-4">
-                  <div className="p-3 bg-blue-100 rounded-lg">
-                    <Send className="h-6 w-6 text-blue-600" />
+                <div className="flex flex-col lg:flex-row lg:items-start gap-4">
+                  <div className="p-3 bg-green-100 rounded-lg flex-shrink-0 self-start">
+                    <Brain className="h-6 w-6 text-green-600" />
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold mb-2">Language Playground Guide</h3>
-                    <p className="text-gray-600 mb-4">
-                      Generate, analyze, and transform text using advanced AI models and MCP tools.
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-semibold mb-2">Language Processing Guide</h3>
+                    <p className="text-gray-600 mb-4 text-wrap-anywhere">
+                      Leverage advanced NLP models to analyze, transform, and understand text content.
                     </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 text-sm">
                       <div>
                         <h4 className="font-medium mb-2">Available Tasks</h4>
                         <ul className="space-y-1 text-gray-600">
-                          <li>• <strong>Completion:</strong> Continue or expand text</li>
-                          <li>• <strong>Summarization:</strong> Create concise summaries</li>
-                          <li>• <strong>Translation:</strong> Convert between languages</li>
-                          <li>• <strong>Q&A:</strong> Answer questions based on context</li>
+                          <li className="text-wrap-anywhere">• <strong>Summarization:</strong> Extract key points</li>
+                          <li className="text-wrap-anywhere">• <strong>Translation:</strong> Convert between languages</li>
+                          <li className="text-wrap-anywhere">• <strong>Sentiment Analysis:</strong> Understand emotions</li>
+                          <li className="text-wrap-anywhere">• <strong>Entity Extraction:</strong> Find names and places</li>
                         </ul>
                       </div>
                       <div>
-                        <h4 className="font-medium mb-2">MCP Features</h4>
+                        <h4 className="font-medium mb-2">Best Practices</h4>
                         <ul className="space-y-1 text-gray-600">
-                          <li>• <strong>Sentiment Analysis:</strong> Emotion detection</li>
-                          <li>• <strong>Translation:</strong> Multi-language support</li>
-                          <li>• <strong>Document Generation:</strong> Template creation</li>
-                          <li>• <strong>Real-time Analysis:</strong> Instant insights</li>
+                          <li className="text-wrap-anywhere">• Use clear, well-structured input text</li>
+                          <li className="text-wrap-anywhere">• Choose appropriate models for your task</li>
+                          <li className="text-wrap-anywhere">• Adjust temperature for creativity vs accuracy</li>
+                          <li className="text-wrap-anywhere">• Review results and iterate as needed</li>
                         </ul>
                       </div>
                     </div>

@@ -211,75 +211,75 @@ export default function Dashboard() {
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8">
         <Link href="/playground/chat">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="p-3 bg-green-100 rounded-lg">
+          <Card className="hover:shadow-lg transition-all duration-200 cursor-pointer h-full border border-gray-200">
+            <CardContent className="p-6 h-full flex items-center">
+              <div className="flex items-center w-full">
+                <div className="p-3 bg-green-100 rounded-lg flex-shrink-0">
                   <PlayCircle className="h-6 w-6 text-green-600" />
                 </div>
-                <div className="ml-4">
-                  <h3 className="font-semibold">Chat Playground</h3>
-                  <p className="text-sm text-gray-600">Start chatting with AI models</p>
+                <div className="ml-4 flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm">Chat Playground</h3>
+                  <p className="text-sm text-gray-600 truncate">Start chatting with AI models</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </Link>
         <Link href="/playground/language">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="p-3 bg-purple-100 rounded-lg">
+          <Card className="hover:shadow-lg transition-all duration-200 cursor-pointer h-full border border-gray-200">
+            <CardContent className="p-6 h-full flex items-center">
+              <div className="flex items-center w-full">
+                <div className="p-3 bg-purple-100 rounded-lg flex-shrink-0">
                   <Code className="h-6 w-6 text-purple-600" />
                 </div>
-                <div className="ml-4">
-                  <h3 className="font-semibold">Code Generation</h3>
-                  <p className="text-sm text-gray-600">Generate and review code</p>
+                <div className="ml-4 flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm">Code Generation</h3>
+                  <p className="text-sm text-gray-600 truncate">Generate and review code</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </Link>
         <Link href="/models">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="p-3 bg-blue-100 rounded-lg">
+          <Card className="hover:shadow-lg transition-all duration-200 cursor-pointer h-full border border-gray-200">
+            <CardContent className="p-6 h-full flex items-center">
+              <div className="flex items-center w-full">
+                <div className="p-3 bg-blue-100 rounded-lg flex-shrink-0">
                   <Zap className="h-6 w-6 text-blue-600" />
                 </div>
-                <div className="ml-4">
-                  <h3 className="font-semibold">Browse Models</h3>
-                  <p className="text-sm text-gray-600">Explore available AI models</p>
+                <div className="ml-4 flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm">Browse Models</h3>
+                  <p className="text-sm text-gray-600 truncate">Explore available AI models</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </Link>
         <Link href="/clusters">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="p-3 bg-orange-100 rounded-lg">
+          <Card className="hover:shadow-lg transition-all duration-200 cursor-pointer h-full border border-gray-200">
+            <CardContent className="p-6 h-full flex items-center">
+              <div className="flex items-center w-full">
+                <div className="p-3 bg-orange-100 rounded-lg flex-shrink-0">
                   <Server className="h-6 w-6 text-orange-600" />
                 </div>
-                <div className="ml-4">
-                  <h3 className="font-semibold">Manage Clusters</h3>
-                  <p className="text-sm text-gray-600">Deploy and scale infrastructure</p>
+                <div className="ml-4 flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm">Manage Clusters</h3>
+                  <p className="text-sm text-gray-600 truncate">Deploy and scale infrastructure</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </Link>
         <Link href="/workflows">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="p-3 bg-indigo-100 rounded-lg">
+          <Card className="hover:shadow-lg transition-all duration-200 cursor-pointer h-full border border-gray-200">
+            <CardContent className="p-6 h-full flex items-center">
+              <div className="flex items-center w-full">
+                <div className="p-3 bg-indigo-100 rounded-lg flex-shrink-0">
                   <Workflow className="h-6 w-6 text-indigo-600" />
                 </div>
-                <div className="ml-4">
-                  <h3 className="font-semibold">AI Workflows</h3>
-                  <p className="text-sm text-gray-600">Build intelligent automations</p>
+                <div className="ml-4 flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm">AI Workflows</h3>
+                  <p className="text-sm text-gray-600 truncate">Build intelligent automations</p>
                 </div>
               </div>
             </CardContent>
