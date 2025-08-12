@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -90,6 +90,13 @@ export default function FineTuningPage() {
   const [epochs, setEpochs] = useState(3);
   const [batchSize, setBatchSize] = useState(4);
   const [learningRate, setLearningRate] = useState(0.0001);
+
+  const [testDialogJobId, setTestDialogJobId] = useState<string | null>(null);
+  const [testPrompt, setTestPrompt] = useState("");
+  const [testResponse, setTestResponse] = useState<string | null>(null);
+  const [isTesting, setIsTesting] = useState(false);
+  const [testError, setTestError] = useState<string | null>(null);
+  const downloadAnchorRef = useRef<HTMLAnchorElement | null>(null);
 
   const fetchJobs = async () => {
     try {
@@ -198,6 +205,77 @@ export default function FineTuningPage() {
     } catch (err) {
       console.error('Job deletion error:', err);
       setError(err instanceof Error ? err.message : 'Failed to delete job');
+    }
+  };
+
+  const handleDownloadModel = async (job: FineTuningJob) => {
+    if (!job.result_files || job.result_files.length === 0) return;
+    for (const fileUrl of job.result_files) {
+      // If fileUrl is a direct URL, trigger download
+      const isUrl = fileUrl.startsWith("http://") || fileUrl.startsWith("https://");
+      if (isUrl) {
+        const anchor = document.createElement("a");
+        anchor.href = fileUrl;
+        anchor.download = fileUrl.split("/").pop() || "model.bin";
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+      } else {
+        // Otherwise, fetch from API and download as blob
+        try {
+          const response = await fetch(`/api/fine-tuning/download?file=${encodeURIComponent(fileUrl)}`);
+          if (!response.ok) throw new Error("Failed to download file");
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const anchor = document.createElement("a");
+          anchor.href = url;
+          anchor.download = fileUrl.split("/").pop() || "model.bin";
+          document.body.appendChild(anchor);
+          anchor.click();
+          document.body.removeChild(anchor);
+          window.URL.revokeObjectURL(url);
+        } catch (err) {
+          setError("Download failed: " + (err instanceof Error ? err.message : "Unknown error"));
+        }
+      }
+    }
+  };
+
+  const handleOpenTestDialog = (jobId: string) => {
+    setTestDialogJobId(jobId);
+    setTestPrompt("");
+    setTestResponse(null);
+    setTestError(null);
+  };
+
+  const handleCloseTestDialog = () => {
+    setTestDialogJobId(null);
+    setTestPrompt("");
+    setTestResponse(null);
+    setTestError(null);
+  };
+
+  const handleTestModel = async () => {
+    if (!testDialogJobId || !testPrompt) return;
+    setIsTesting(true);
+    setTestResponse(null);
+    setTestError(null);
+    try {
+      const response = await fetch("/api/fine-tuning/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ job_id: testDialogJobId, prompt: testPrompt }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to test model");
+      }
+      const data = await response.json();
+      setTestResponse(data.response || "No response");
+    } catch (err) {
+      setTestError(err instanceof Error ? err.message : "Failed to test model");
+    } finally {
+      setIsTesting(false);
     }
   };
 
@@ -474,13 +552,27 @@ export default function FineTuningPage() {
                     <h4 className="font-medium mb-2">Actions</h4>
                     <div className="space-y-2">
                       {job.result_files && job.result_files.length > 0 && (
-                        <Button variant="outline" size="sm" className="w-full">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => handleDownloadModel(job)}
+                          aria-label="Download Model"
+                          tabIndex={0}
+                        >
                           <Download className="mr-2 h-4 w-4" />
                           Download Model
                         </Button>
                       )}
                       {job.status === "completed" && (
-                        <Button variant="outline" size="sm" className="w-full">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => handleOpenTestDialog(job.id)}
+                          aria-label="Test Model"
+                          tabIndex={0}
+                        >
                           <Play className="mr-2 h-4 w-4" />
                           Test Model
                         </Button>
@@ -538,6 +630,66 @@ export default function FineTuningPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Test Model Dialog */}
+      <Dialog open={!!testDialogJobId} onOpenChange={handleCloseTestDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Test Fine-tuned Model</DialogTitle>
+            <DialogDescription>
+              Enter a prompt to test the selected fine-tuned model.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Label htmlFor="test-prompt">Prompt</Label>
+            <Textarea
+              id="test-prompt"
+              value={testPrompt}
+              onChange={e => setTestPrompt(e.target.value)}
+              placeholder="Type your prompt here..."
+              rows={3}
+              className="resize-none"
+              aria-label="Prompt for testing model"
+              tabIndex={0}
+              autoFocus
+            />
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={handleCloseTestDialog}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleTestModel}
+                disabled={!testPrompt || isTesting}
+                aria-label="Send prompt to model"
+              >
+                {isTesting ? (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    Testing...
+                  </>
+                ) : (
+                  <>
+                    <Play className="mr-2 h-4 w-4" />
+                    Test
+                  </>
+                )}
+              </Button>
+            </div>
+            {testResponse && (
+              <div className="bg-gray-50 border rounded p-3 mt-2">
+                <Label>Response</Label>
+                <div className="text-gray-800 whitespace-pre-wrap mt-1">{testResponse}</div>
+              </div>
+            )}
+            {testError && (
+              <div className="flex items-center space-x-2 text-red-700 mt-2">
+                <AlertCircle className="h-4 w-4" />
+                <span>{testError}</span>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 
